@@ -1,0 +1,165 @@
+Loading rhel8/default-amp
+  Loading requirement: dot rhel8/slurm singularity/current rhel8/global
+    cuda/11.4 libpciaccess/0.16/gcc-9.4.0-6fonbj6
+    libiconv/1.16/gcc-9.4.0-ahebbov libxml2/2.9.12/gcc-9.4.0-gnknt5e
+    ncurses/6.2/gcc-9.4.0-aiirok7 hwloc/2.5.0/gcc-9.4.0-7sqomga
+    libevent/2.1.12/gcc-9.4.0-hgny7cm numactl/2.0.14/gcc-9.4.0-52dwc6n
+    cuda/11.4.0/gcc-9.4.0-3hnxhjt gdrcopy/2.2/gcc-9.4.0-e4igtfp
+    knem/1.1.4/gcc-9.4.0-bpbxgva libnl/3.3.0/gcc-9.4.0-whwhrwb
+    rdma-core/34.0/gcc-9.4.0-5eo5n2u ucx/1.11.1/gcc-9.4.0-lktqyl4
+    openmpi/4.1.1/gcc-9.4.0-epagguv
+wandb: Appending key for api.wandb.ai to your netrc file: /home/tdb47/.netrc
+Changed directory to /rds/user/tdb47/hpc-work/planning/thinker_private_planning/thinker.
+
+JobID: 52176991
+======
+Time: Thu May  9 07:15:54 BST 2024
+Running on master node: gpu-q-4
+Current directory: /rds/user/tdb47/hpc-work/planning/thinker_private_planning/thinker
+
+Nodes allocated:
+================
+gpu-q-4
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+python train.py \ 
+	--xpid mini_test_000 	--drc true 	--actor_unroll_len 20 	--reg_cost 1 	--actor_learning_rate 4e-4 	--entropy_cost 1e-2 	--v_trace_lamb 0.97 	--actor_adam_eps 1e-4 \ 
+	--has_model false 	--use_wandb true 	--total_steps 50000 	--wandb_ckp_freq 50 
+
+
+Initializing...
+usage: train.py [-h] [--config CONFIG] [--has_model HAS_MODEL]
+                [--train_model TRAIN_MODEL]
+                [--model_batch_size MODEL_BATCH_SIZE]
+                [--model_learning_rate MODEL_LEARNING_RATE]
+                [--model_optimizer MODEL_OPTIMIZER]
+                [--model_sgd_momentum MODEL_SGD_MOMENTUM]
+                [--model_sgd_weight_decay MODEL_SGD_WEIGHT_DECAY]
+                [--vp_enc_lr_mul VP_ENC_LR_MUL]
+                [--model_grad_norm_clipping MODEL_GRAD_NORM_CLIPPING]
+                [--min_replay_ratio MIN_REPLAY_RATIO]
+                [--max_replay_ratio MAX_REPLAY_RATIO]
+                [--total_steps TOTAL_STEPS] [--priority_alpha PRIORITY_ALPHA]
+                [--priority_beta PRIORITY_BETA]
+                [--buffer_traj_len BUFFER_TRAJ_LEN]
+                [--model_unroll_len MODEL_UNROLL_LEN]
+                [--model_mem_unroll_len MODEL_MEM_UNROLL_LEN]
+                [--model_return_n MODEL_RETURN_N]
+                [--model_warm_up_n MODEL_WARM_UP_N]
+                [--model_buffer_n MODEL_BUFFER_N]
+                [--model_policy_loss_cost MODEL_POLICY_LOSS_COST]
+                [--model_vs_loss_cost MODEL_VS_LOSS_COST]
+                [--model_rs_loss_cost MODEL_RS_LOSS_COST]
+                [--model_done_loss_cost MODEL_DONE_LOSS_COST]
+                [--model_img_loss_cost MODEL_IMG_LOSS_COST]
+                [--model_fea_loss_cost MODEL_FEA_LOSS_COST]
+                [--model_sup_loss_cost MODEL_SUP_LOSS_COST]
+                [--model_reg_loss_cost MODEL_REG_LOSS_COST]
+                [--model_noise_loss_cost MODEL_NOISE_LOSS_COST]
+                [--fea_loss_inf_bn FEA_LOSS_INF_BN]
+                [--img_fea_cos IMG_FEA_COS] [--dual_net DUAL_NET]
+                [--model_decoder_depth MODEL_DECODER_DEPTH]
+                [--model_enc_type MODEL_ENC_TYPE]
+                [--model_enc_f_type MODEL_ENC_F_TYPE]
+                [--model_size_nn MODEL_SIZE_NN]
+                [--model_downscale_c MODEL_DOWNSCALE_C]
+                [--model_downscale_c_vp MODEL_DOWNSCALE_C_VP]
+                [--model_disable_bn MODEL_DISABLE_BN]
+                [--model_zero_init MODEL_ZERO_INIT]
+                [--model_has_memory MODEL_HAS_MEMORY]
+                [--model_ordinal MODEL_ORDINAL] [--sr_confuse SR_CONFUSE]
+                [--vp_fix_bootstrap VP_FIX_BOOTSTRAP] [--grayscale GRAYSCALE]
+                [--atari ATARI] [--discrete_k DISCRETE_K]
+                [--obs_norm OBS_NORM] [--obs_clip OBS_CLIP]
+                [--reward_norm REWARD_NORM] [--reward_clip REWARD_CLIP]
+                [--require_prob REQUIRE_PROB] [--wrapper_type WRAPPER_TYPE]
+                [--rec_t REC_T] [--test_rec_t TEST_REC_T]
+                [--max_depth MAX_DEPTH] [--tree_carry TREE_CARRY]
+                [--reset_mode RESET_MODE] [--return_h RETURN_H]
+                [--return_x RETURN_X] [--return_double RETURN_DOUBLE]
+                [--has_action_seq HAS_ACTION_SEQ]
+                [--se_query_size SE_QUERY_SIZE] [--se_td_lambda SE_TD_LAMBDA]
+                [--se_query_cur SE_QUERY_CUR] [--se_buffer_n SE_BUFFER_N]
+                [--se_tree_carry SE_TREE_CARRY]
+                [--se_manual_stat SE_MANUAL_STAT] [--sample_n SAMPLE_N]
+                [--sample_temp SAMPLE_TEMP] [--sample_replace SAMPLE_REPLACE]
+                [--discounting DISCOUNTING] [--im_enable IM_ENABLE]
+                [--stat_mask_type STAT_MASK_TYPE] [--cur_enable CUR_ENABLE]
+                [--cur_reward_cost CUR_REWARD_COST] [--cur_v_cost CUR_V_COST]
+                [--cur_pi_cost CUR_PI_COST] [--cur_enc_cost CUR_ENC_COST]
+                [--cur_x_cost CUR_X_COST] [--cur_sup_cost CUR_SUP_COST]
+                [--cur_done_gate CUR_DONE_GATE]
+                [--cur_done_elapse CUR_DONE_ELAPSE]
+                [--noise_enable NOISE_ENABLE] [--noise_n NOISE_N]
+                [--noise_d NOISE_D] [--noise_alpha NOISE_ALPHA]
+                [--noise_mlp NOISE_MLP] [--detect_dan_num DETECT_DAN_NUM]
+                [--dm_rgb DM_RGB] [--xpid XPID] [--ckp CKP]
+                [--preload PRELOAD] [--savedir SAVEDIR] [--profile PROFILE]
+                [--parallel PARALLEL] [--float16 FLOAT16]
+                [--base_seed BASE_SEED] [--repeat_action_n REPEAT_ACTION_N]
+                [--rand_action_eps RAND_ACTION_EPS] [--project PROJECT]
+                [--ray_mem RAY_MEM] [--ray_gpu RAY_GPU] [--ray_cpu RAY_CPU]
+                [--gpu_learn GPU_LEARN] [--mini MINI] [--name NAME]
+                [--train_actor TRAIN_ACTOR]
+                [--actor_learning_rate ACTOR_LEARNING_RATE]
+                [--actor_batch_size ACTOR_BATCH_SIZE]
+                [--actor_unroll_len ACTOR_UNROLL_LEN]
+                [--actor_use_rms ACTOR_USE_RMS]
+                [--actor_grad_norm_clipping ACTOR_GRAD_NORM_CLIPPING]
+                [--actor_adam_eps ACTOR_ADAM_EPS]
+                [--return_norm_type RETURN_NORM_TYPE]
+                [--cur_return_norm_type CUR_RETURN_NORM_TYPE]
+                [--v_trace_lamb V_TRACE_LAMB] [--im_cost IM_COST]
+                [--im_cost_anneal IM_COST_ANNEAL] [--cur_cost CUR_COST]
+                [--cur_cost_anneal CUR_COST_ANNEAL]
+                [--baseline_cost BASELINE_COST]
+                [--entropy_r_cost ENTROPY_R_COST]
+                [--entropy_cost ENTROPY_COST]
+                [--im_entropy_cost IM_ENTROPY_COST] [--reg_cost REG_COST]
+                [--clip_v_loss CLIP_V_LOSS] [--see_real_state SEE_REAL_STATE]
+                [--see_tree_rep SEE_TREE_REP] [--see_h SEE_H] [--see_x SEE_X]
+                [--legacy LEGACY] [--sep_actor_critic SEP_ACTOR_CRITIC]
+                [--drc DRC] [--mcts MCTS]
+                [--copy_model_policy COPY_MODEL_POLICY]
+                [--tree_rep_rnn TREE_REP_RNN] [--se_lstm_table SE_LSTM_TABLE]
+                [--x_rnn X_RNN] [--real_state_rnn REAL_STATE_RNN]
+                [--x_enc_first_pool X_ENC_FIRST_POOL]
+                [--enc_1d_shallow ENC_1D_SHALLOW] [--enc_1d_norm ENC_1D_NORM]
+                [--enc_1d_block ENC_1D_BLOCK] [--enc_1d_hs ENC_1D_HS]
+                [--tran_t TRAN_T] [--tran_mem_n TRAN_MEM_N]
+                [--tran_layer_n TRAN_LAYER_N] [--tran_head_n TRAN_HEAD_N]
+                [--tran_lstm_no_attn TRAN_LSTM_NO_ATTN]
+                [--tran_attn_b TRAN_ATTN_B] [--tran_dim TRAN_DIM]
+                [--critic_zero_init CRITIC_ZERO_INIT]
+                [--critic_enc_type CRITIC_ENC_TYPE]
+                [--critic_enc_f_type CRITIC_ENC_F_TYPE]
+                [--sep_im_head SEP_IM_HEAD] [--last_layer_n LAST_LAYER_N]
+                [--actor_ordinal ACTOR_ORDINAL] [--tanh_action TANH_ACTION]
+                [--actor_min_std ACTOR_MIN_STD]
+                [--actor_max_std ACTOR_MAX_STD]
+                [--cur_reward_adj CUR_REWARD_ADJ]
+                [--cur_norm_type CUR_NORM_TYPE]
+                [--cur_reward_mq CUR_REWARD_MQ]
+                [--cur_reward_uq CUR_REWARD_UQ]
+                [--cur_reward_lq CUR_REWARD_LQ]
+                [--cur_reward_bn CUR_REWARD_BN]
+                [--cur_reward_norm CUR_REWARD_NORM]
+                [--cur_reward_pri CUR_REWARD_PRI]
+                [--cur_reward_min CUR_REWARD_MIN]
+                [--cur_reward_max CUR_REWARD_MAX] [--cur_ema CUR_EMA]
+                [--ppo_k PPO_K] [--ppo_n PPO_N] [--ppo_kl_coef PPO_KL_COEF]
+                [--ppo_kl_targ PPO_KL_TARG] [--ppo_early_stop PPO_EARLY_STOP]
+                [--ppo_syn PPO_SYN] [--ppo_bmix PPO_BMIX]
+                [--ppo_clip PPO_CLIP] [--ppo_v_trace PPO_V_TRACE]
+                [--preload_actor PRELOAD_ACTOR] [--use_wandb USE_WANDB]
+                [--wandb_ckp_freq WANDB_CKP_FREQ]
+                [--policy_vis_freq POLICY_VIS_FREQ]
+                [--policy_vis_length POLICY_VIS_LENGTH]
+                [--parallel_actor PARALLEL_ACTOR] [--auto_res AUTO_RES]
+                [--self_play_n SELF_PLAY_N] [--env_n ENV_N]
+                [--gpu_self_play GPU_SELF_PLAY]
+                [--gpu_learn_actor GPU_LEARN_ACTOR]
+train.py: error: unrecognized arguments:  --xpid mini_test_000  --has_model false
