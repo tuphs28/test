@@ -3,6 +3,7 @@ import gym
 from gym import spaces
 import math
 import random
+from heapq import heappush, heappop
 
 class PillEater:
     WALLS = 0
@@ -58,18 +59,18 @@ class PillEaterEnv(gym.Env):
         self.food = None
         self.pills = None
 
-        self.nghosts_init = 1
+        self.nghosts_init = 4
         self.ghost_speed_init = 0.5
         self.ghost_speed = self.ghost_speed_init
         self.ghost_speed_increase = 0.1
-        self.stochasticity = 0.0
+        self.stochasticity = 0.05
         self.safe_distance = 5
 
         self.g_lam = 1
         self.g_unif = 2
 
         self.npills = 4
-        self.pill_duration = 20
+        self.pill_duration = 10
 
         self.dir_vec = np.array([
             [0, 0],     # no-op
@@ -91,7 +92,7 @@ class PillEaterEnv(gym.Env):
         self.all_food_terminate = True
         self.timer_terminate = -1
         self.discount = 1
-        self.frame_cap = 25000
+        self.frame_cap = 500
     
         self.observation_space = spaces.Box(low=0, high=1, shape=(self.shape, self.shape, self.nplanes), dtype=np.uint8)
         self.action_space = spaces.Discrete(self.nactions)
@@ -132,13 +133,14 @@ class PillEaterEnv(gym.Env):
         self.pcontinue = 1
         self.reward = 0
 
-        self.nghosts_init = 1 + np.random.poisson(lam=self.g_lam)
+        #self.nghosts_init = 1 #+ np.random.poisson(lam=self.g_lam)
 
         if room_id:
             self.level = room_id
         else:
             self.level = 1
 
+        self.nghosts_init = 1 + np.random.poisson(lam=1)
       
         self._init_level(self.level)
         observation = self._make_image()
@@ -169,7 +171,7 @@ class PillEaterEnv(gym.Env):
         for i, ghost in enumerate(self.world_state["ghosts"]):
             speed = self.ghost_speed * ghost_speed_modifier
             if np.random.uniform() < speed:
-                self._move_ghost(ghost)
+                self._move_ghost(ghost, i)
                 if np.array_equal(ghost["pos"], self.world_state["pillman"]["pos"]):
                     if self.world_state["power"] == 0:
                         self._die_by_ghost()
@@ -180,7 +182,7 @@ class PillEaterEnv(gym.Env):
         # Check if move to next level or end
         if self.nfood == 0:
             self._init_level(self.level + 1)
-        if self.frame_cap > 0 and self.frame >= self.frame_cap:
+        if self.frame >= self.frame_cap:
             self.pcontinue = 0
 
         observation = self._make_image()
@@ -221,7 +223,8 @@ class PillEaterEnv(gym.Env):
     def _init_level(self, level):
         """Initializes a new level"""
         self.level = level
-        self.map_basic = self.generate_new_maze(self.shape, p=0.3)
+        self.frame = 0
+        self.map_basic = self.generate_new_maze(self.shape)
         self.map, self.walls = self.make_movement_arrays(self.map_basic)
 
         self.world_state = {
@@ -242,7 +245,8 @@ class PillEaterEnv(gym.Env):
 
         self.world_state["pills"] = [self._make_pill() for _ in range(self.npills)]
 
-        self.nghosts = int(np.floor(self.nghosts_init + np.random.uniform(low=0, high=self.g_unif)*level))
+        self.nghosts = int(np.floor(self.nghosts_init + (0.25+np.random.uniform(low=0, high=self.g_unif))*(level-1)))
+        #self.nghosts = int(self.nghosts_init + math.floor((level - 1)))
         self.world_state["ghosts"] = [self._make_enemy() for _ in range(self.nghosts)]
         self.world_state["power"] = 0
         self.ghost_speed = self.ghost_speed_init + self.ghost_speed_increase * (level - 1)
@@ -286,40 +290,95 @@ class PillEaterEnv(gym.Env):
                 self._get_pill(i)
                 break
 
-    def _move_ghost(self, ghost):
-        """Moves the ghost."""
+    def _move_ghost(self, ghost, ghost_index):
+        """Moves the ghost using A* pathfinding for chasing or fleeing, ensuring no collisions."""
+        def heuristic(pos, target, fleeing=False):
+            """Heuristic function: Manhattan distance."""
+            dist = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
+            return -dist if fleeing else dist  # Invert distance if fleeing
 
+        def neighbors(pos):
+            """Get valid neighbors of the current position."""
+            y, x = pos
+            valid_moves = []
+            for action in range(1, self.nactions):
+                new_pos = tuple(self.map[y, x, action])
+                if not np.array_equal(new_pos, pos):  # Ensure it's a valid move
+                    valid_moves.append((new_pos, action))
+            return valid_moves
+
+        # Define the start and goal positions
+        start = tuple(ghost["pos"])
+        goal = tuple(self.world_state["pillman"]["pos"])
+        fleeing = self.world_state["power"] > 0  # Determine if the ghost should flee
+
+        # if not fleeing, do epsilon-greedy chase
+        if not fleeing and self.stochasticity > np.random.uniform():
+            self._move_ghost_random(ghost, ghost_index)
+            return
+
+        # If the ghost is already at the goal, no movement is needed (edge case)
+        if start == goal and not fleeing:
+            return
+
+        # A* algorithm setup
+        open_set = []
+        heappush(open_set, (heuristic(start, goal, fleeing), 0, start, None))  # (f-score, g-score, position, action)
+        came_from = {}
+        g_score = {start: 0}
+        action_map = {}
+
+        # Perform A* search
+        while open_set:
+            _, current_g, current, action = heappop(open_set)
+
+            # If the goal is reached (chasing mode only), reconstruct the path
+            if current == goal and not fleeing:
+                while action_map[current] != start:
+                    current = action_map[current]
+                next_action = came_from[current]
+                new_pos = self.map[start[0], start[1], next_action]
+                if not self._is_ghost_collision(new_pos, ghost_index):
+                    ghost["dir"] = next_action
+                    ghost["pos"] = new_pos
+                return
+
+            for neighbor, neighbor_action in neighbors(current):
+                tentative_g = current_g + 1  # Each move costs 1
+                if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                    g_score[neighbor] = tentative_g
+                    f_score = tentative_g + heuristic(neighbor, goal, fleeing)
+                    heappush(open_set, (f_score, tentative_g, neighbor, neighbor_action))
+                    came_from[neighbor] = neighbor_action
+                    action_map[neighbor] = current
+
+        # If no path is found, fall back to random movement
+        self._move_ghost_random(ghost, ghost_index)
+
+    def _is_ghost_collision(self, pos, ghost_index):
+        """Check if the given position collides with any other ghost."""
+        for i, other_ghost in enumerate(self.world_state["ghosts"]):
+            if i != ghost_index and np.array_equal(pos, other_ghost["pos"]):
+                return True
+        return False
+
+    def _move_ghost_random(self, ghost, ghost_index):
+        """Fallback to random movement if A* fails (e.g., no valid path)."""
         pos = ghost["pos"]
         available_moves = []
         for i in range(1, self.nactions):
             new_pos = self.map[pos[0], pos[1], i]
-            if not np.array_equal(new_pos, pos):
+            if not np.array_equal(new_pos, pos) and not self._is_ghost_collision(new_pos, ghost_index):
                 available_moves.append(i)
+        if available_moves:
+            ghost["dir"] = np.random.choice(available_moves)
+            ghost["pos"] = self.map[pos[0], pos[1], ghost["dir"]]
 
-        if len(available_moves) == 0:
-            return  
 
-        reverse_dir = self.reverse_dir[ghost["dir"]]
-        if reverse_dir in available_moves and len(available_moves) > 1:
-            available_moves.remove(reverse_dir) # ghosts will only reverse direction (e.g. up -> down if no other possible move can be made)
-
-        pillman_pos = self.world_state["pillman"]["pos"]
-        direction_vectors = self.dir_vec[available_moves]
-        direction_to_pillman = pillman_pos - pos
-        norm = np.linalg.norm(direction_to_pillman)
-        if norm > 0:
-            direction_to_pillman = direction_to_pillman / norm
-            prods = np.matmul(direction_vectors, direction_to_pillman) # prods is array of dot products of available movement vectors with the (unit) difference vector between ghost and pillman
-            if self.world_state["power"] == 0:
-                chosen_idx = np.argmax(prods)
-            else:
-                chosen_idx = np.argmin(prods)
-            chosen_move = available_moves[chosen_idx]
-        else:
-            chosen_move = np.random.choice(available_moves)
-
-        ghost["dir"] = chosen_move
-        ghost["pos"] = self.map[pos[0], pos[1], ghost["dir"]]
+    def _move_all_ghosts(self):
+        """Moves all ghosts while ensuring no two occupy the same square."""
+        for i, ghost in enumerate(self.world_state["ghosts"]):
+            self._move_ghost(ghost, i)
 
 
     def _make_image(self):
@@ -365,7 +424,7 @@ class PillEaterEnv(gym.Env):
         self.seed_value = seed
         np.random.seed(seed)
 
-    def generate_new_maze(self, size = 13, p = 0.3):
+    def generate_new_maze(self, size = 13, p = 0.15):
         grid = np.ones((size, size), dtype=int)
         
         start_x, start_y = random.randrange(0, size, 2), random.randrange(0, size, 2)
