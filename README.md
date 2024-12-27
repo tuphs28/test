@@ -11,6 +11,7 @@ This is the official repo for the paper [*Interpreting Emergent Planning in Mode
   - [Intervention Experiments](#intervention-experiments)
   - [Investigating Behavioural Evidence of Planning During Training](#investigating-the-emergence-of-behavioural-evidence-of-planning-during-training)
   - [Performing Experiments For Different Agents](#performing-experiments-for-different-agents)
+- [Mini Pacman Experiments](#mini-pacman-experiments)
 - [Training New Agents](#training-new-agents)
 
 ##  Installation
