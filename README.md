@@ -1,6 +1,5 @@
 # Interpreting Emergent Planning in Model-Free Reinforcement Learning
-![front page gif](frontgif.gif)
-
+<img src="frontgif.gif" alt="Dancing Cat" style="width: 100%; display: block; margin: auto;"/>
 
 This is the official repo for the paper [*Interpreting Emergent Planning in Model-Free Reinforcement Learning*](https://openreview.net/forum?id=DzGe40glxs&referrer=%5BAuthor%20Console%5D). A blog post summarising this paper can be found [here](https://tuphs28.github.io/). This repo builds on the [*Thinker*](https://github.com/stephen-chung-mh/thinker) repo associated with the paper [*Thinker: Learning to Plan and Act*](https://arxiv.org/abs/2307.14993).
 
