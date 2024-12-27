@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="run thinking time experiments to measure extent to which agent solves extra levels when given thinking time")
     parser.add_argument("--num_episodes", type=int, default=1000, help="number of episodes to run experiment for")
-    parser.add_argument("--env_name", type=str, default="medium-", help="level dataset to run experiments on")
+    parser.add_argument("--env_name", type=str, default="med", help="level dataset to run experiments on")
     parser.add_argument("--num_thinking_steps", type=int, default=5, help="number of extra thinking steps to perform")
     parser.add_argument("--model_name", type=str, default="250m", help="name of agent checkpoint on which to run experiments")
     parser.add_argument("--num_layers", type=int, default=3, help="number of convlstm layers the agent has")
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     flags.mini_unqbox = False
     mini_sokoban = True
     results = []
-    for num_thinking_steps in [0,args.num_thinking_steps]:
+    for num_thinking_steps in [0, args.num_thinking_steps]:
         print(f"==== ********** STEPS: {num_thinking_steps} ********** ====")
 
         if args.range:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
                     state, reward, done, info = env.step(actor_out.action)
                     step_count += 1
 
-                if step_count < 115-num_thinking_steps-1:
+                if step_count < 115-num_thinking_steps:
                     solve_count += 1
             results.append({"success_rate": solve_count / args.num_episodes, "agent": agent_name, "thinking_steps": num_thinking_steps})
     

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.utils
 import torch.utils.data
-from create_probing_dataset import ProbingDataset, ProbingDatasetCleaned
+from experiments.pilleater_experiments.create_probing_dataset_old import ProbingDataset, ProbingDatasetCleaned
 from typing import Optional
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     channels = list(range(32))
-    batch_size = 16
+    batch_size = 2
     num_epochs = args.num_epochs
     wd = args.weight_decay
     kernel = args.kernel

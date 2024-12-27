@@ -57,6 +57,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, default="250m", help="name of agent checkpoint on which to train probes")
     parser.add_argument("--convprobe_off", action="store_false", default=True, help="use linprobe rather than convprobe")
     parser.add_argument("--num_layers", type=int, default=3, help="number of convlstm layers the agent has")
+    parser.add_argument('--resnet', action='store_true')
     args = parser.parse_args()
 
     channels = list(range(32))
@@ -80,12 +81,12 @@ if __name__ == "__main__":
         device = torch.device("cpu") 
     
     
-    layers = [(f"layer{k}", (k*64)+32) for k in range(args.num_layers)] + [("x", 0)]
+    layers = [(f"layer{k}", ((k*32) if args.resnet else (k*64)+32)) for k in range(args.num_layers)] + [("x", 0)]
     
     results = {}
 
-    train_dataset_c = torch.load(f"./data/train_data_full_{args.model_name}.pt")
-    test_dataset_c = torch.load(f"./data/test_data_full_{args.model_name}.pt")
+    train_dataset_c = torch.load(f"./data/train_data_full_{args.model_name}" + ("_resnet" if args.resnet else "") + ".pt")
+    test_dataset_c = torch.load(f"./data/test_data_full_{args.model_name}" + ("_resnet" if args.resnet else "") + ".pt")
 
     cleaned_train_data, cleaned_test_data = [], []
     for trans in train_dataset_c.data:
@@ -174,7 +175,7 @@ if __name__ == "__main__":
                 os.mkdir("./results/convprobe_results/models")
             if not os.path.exists(f"./results/convprobe_results/models/{args.feature}"):
                 os.mkdir(f"./results/convprobe_results/models/{args.feature}")
-            torch.save(probe.state_dict(), f"./results/convprobe_results/models/{args.feature}/{args.model_name }{'full' if not args.convprobe_off else ''}_{layer_name}_kernel{args.kernel}_args.weight_decay{args.weight_decay}_seed{seed}.pt")
+            torch.save(probe.state_dict(), f"./results/convprobe_results/models/{args.feature}/{args.model_name }_{layer_name}_kernel{args.kernel}_wd{args.weight_decay}_seed{seed}.pt")
 
         results_df = pd.DataFrame(results)
-        results_df.to_csv(f"./results/convprobe_results/{args.model_name }{'full' if not args.convprobe_off else ''}_{args.feature}_kernel{args.kernel}_args.weight_decay{args.weight_decay}_seed{seed}.csv")
+        results_df.to_csv(f"./results/convprobe_results/{args.model_name}_{args.feature}_kernel{args.kernel}_wd{args.weight_decay}_seed{seed}.csv")

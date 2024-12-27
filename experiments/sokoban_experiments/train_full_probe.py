@@ -42,10 +42,11 @@ if __name__ == "__main__":
     parser.add_argument("--num_seeds", type=int, default=5)
     parser.add_argument("--model_name", type=str, default="250m")
     parser.add_argument("--num_layers", type=int, default=3)
+    parser.add_argument('--resnet', action='store_true')
     args = parser.parse_args()
 
     
-    layers = [(f"layer{k}", (k*64)+32) for k in range(args.num_layers)] + [("x", 0)]
+    layers = [(f"layer{k}",  ((k*32) if args.resnet else (k*64)+32))  for k in range(args.num_layers)] + [("x", 0)]
     batch_size = 16
     channels = list(range(32))
 
@@ -56,8 +57,8 @@ if __name__ == "__main__":
   
     results = {}
 
-    train_dataset_c = torch.load(f"./data/train_data_full_{args.model_name}.pt")
-    test_dataset_c = torch.load(f"./data/test_data_full_{args.model_name}.pt")
+    train_dataset_c = torch.load(f"./data/train_data_full_{args.model_name}" + ("_resnet" if args.resnet else "") + ".pt")
+    test_dataset_c = torch.load(f"./data/test_data_full_{args.model_name}" + ("_resnet" if args.resnet else "") + ".pt")
     
     cleaned_train_data, cleaned_test_data  = [], []
     for trans in train_dataset_c.data:
@@ -94,7 +95,7 @@ if __name__ == "__main__":
             probe = LinearProbe(in_dim = 7*64 if layer_name == "x" else 32*64, out_dim=out_dim, bias=False)
 
             probe.to(device)
-            optimiser = torch.optim.AdamW(params=probe.parameters(), lr=1e-3, weight_decay=args.wd)
+            optimiser = torch.optim.AdamW(params=probe.parameters(), lr=1e-3, weight_decay=args.weight_decay)
         
             for epoch in range(1, args.num_epochs+1):
                 start_time = time.time()
@@ -153,7 +154,7 @@ if __name__ == "__main__":
                 os.mkdir("./results/fullprobe_results/models")
             if not os.path.exists(f"./results/fullprobe_results/models/{args.feature}"):
                 os.mkdir(f"./results/fullprobe_results/models/{args.feature}")
-            torch.save(probe.state_dict(), f"./fullprobe_results/models/{args.feature}/{args.model_name}_{args.feature}__wd{args.wd}_seed{seed}.pt")
+            torch.save(probe.state_dict(), f"./results/fullprobe_results/models/{args.feature}/{args.model_name}_{args.feature}_wd{args.weight_decay}_seed{seed}.pt")
 
         results_df = pd.DataFrame(results)
-        results_df.to_csv(f"./results/fullprobe_results/{args.model_name}_{args.feature}_wd{args.wd}_seed{seed}.csv")
+        results_df.to_csv(f"./results/fullprobe_results/{args.model_name}_{args.feature}_wd{args.weight_decay}_seed{seed}.csv")

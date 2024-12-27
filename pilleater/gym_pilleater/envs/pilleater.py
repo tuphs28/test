@@ -141,7 +141,13 @@ class PillEaterEnv(gym.Env):
             self.level = 1
 
         self.nghosts_init = 1 + np.random.poisson(lam=1)
-      
+
+        self.map_basic = self.generate_new_maze(self.shape)
+        self.map, self.walls = self.make_movement_arrays(self.map_basic)
+
+        self.world_state = {}
+        self.world_state["pillman"] = self._make_pillman()
+
         self._init_level(self.level)
         observation = self._make_image()
 
@@ -224,17 +230,12 @@ class PillEaterEnv(gym.Env):
         """Initializes a new level"""
         self.level = level
         self.frame = 0
-        self.map_basic = self.generate_new_maze(self.shape)
-        self.map, self.walls = self.make_movement_arrays(self.map_basic)
 
-        self.world_state = {
-            "pillman": self._make_pillman(),
-            "ghosts": [],
-            "food": np.zeros((self.shape, self.shape), dtype=np.uint8),
-            "notfood": np.zeros((self.shape, self.shape), dtype=np.uint8),
-            "pills": [],
-            "power": 0
-        }
+        self.world_state["ghosts"] = []
+        self.world_state["food"] = np.zeros((self.shape, self.shape), dtype=np.uint8)
+        self.world_state["notfood"] = np.zeros((self.shape, self.shape), dtype=np.uint8)
+        self.world_state["pills"] = []
+        self.world_state["power"] = 0
 
         self.world_state["food"] = (self.walls == 0).astype(np.uint8)
         self.world_state["notfood"] = np.zeros_like(self.world_state["food"])
@@ -291,69 +292,139 @@ class PillEaterEnv(gym.Env):
                 break
 
     def _move_ghost(self, ghost, ghost_index):
-        """Moves the ghost using A* pathfinding for chasing or fleeing, ensuring no collisions."""
-        def heuristic(pos, target, fleeing=False):
-            """Heuristic function: Manhattan distance."""
-            dist = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
-            return -dist if fleeing else dist  # Invert distance if fleeing
+        """Moves the ghost using:
+        - A* pathfinding if chasing (power == 0),
+        - A simple distance-maximizing rule if fleeing (power > 0)."""
+        if self.stochasticity > np.random.uniform():
+            self._move_ghost_random(ghost, ghost_index)
+        elif self.world_state["power"] > 0:
+            self._move_ghost_flee(ghost, ghost_index)
+        else:
+            self._move_ghost_chase(ghost, ghost_index)
+
+
+    def _move_ghost_chase(self, ghost, ghost_index):
+        """Chase logic: Use A* to move ghost closer to Pillman."""
+        import heapq
+
+        def heuristic(pos, target):
+            """Manhattan distance."""
+            return abs(pos[0] - target[0]) + abs(pos[1] - target[1])
 
         def neighbors(pos):
-            """Get valid neighbors of the current position."""
+            """
+            Valid neighbor positions plus the action used to get there.
+            Skips no-op (action=0) to force movement.
+            Also checks for collisions with other ghosts.
+            """
             y, x = pos
             valid_moves = []
             for action in range(1, self.nactions):
                 new_pos = tuple(self.map[y, x, action])
-                if not np.array_equal(new_pos, pos):  # Ensure it's a valid move
+                # Ignore if it doesn't move OR if it collides with another ghost
+                if (not np.array_equal(new_pos, pos) 
+                    and not self._is_ghost_collision(new_pos, ghost_index)):
                     valid_moves.append((new_pos, action))
             return valid_moves
 
-        # Define the start and goal positions
+        # Setup: get start & goal
         start = tuple(ghost["pos"])
         goal = tuple(self.world_state["pillman"]["pos"])
-        fleeing = self.world_state["power"] > 0  # Determine if the ghost should flee
 
-        # if not fleeing, do epsilon-greedy chase
-        if not fleeing and self.stochasticity > np.random.uniform():
-            self._move_ghost_random(ghost, ghost_index)
+        # If ghost is already at Pillman's position, do nothing
+        if start == goal:
             return
 
-        # If the ghost is already at the goal, no movement is needed (edge case)
-        if start == goal and not fleeing:
-            return
-
-        # A* algorithm setup
+        # A* data structures
         open_set = []
-        heappush(open_set, (heuristic(start, goal, fleeing), 0, start, None))  # (f-score, g-score, position, action)
-        came_from = {}
         g_score = {start: 0}
-        action_map = {}
+        # came_from will map: position -> (parent_position, action_used_to_get_here)
+        came_from = {}
 
-        # Perform A* search
+        # Push the start node: f=start_h, g=0, pos=start, action_in=None
+        start_h = heuristic(start, goal)
+        heapq.heappush(open_set, (start_h, 0, start, None))
+
         while open_set:
-            _, current_g, current, action = heappop(open_set)
+            f, g_current, current, action_in = heapq.heappop(open_set)
 
-            # If the goal is reached (chasing mode only), reconstruct the path
-            if current == goal and not fleeing:
-                while action_map[current] != start:
-                    current = action_map[current]
-                next_action = came_from[current]
-                new_pos = self.map[start[0], start[1], next_action]
-                if not self._is_ghost_collision(new_pos, ghost_index):
-                    ghost["dir"] = next_action
-                    ghost["pos"] = new_pos
+            # If we've reached the goal, reconstruct the path
+            if current == goal:
+                # Reconstruct path by walking backwards from goal to start
+                path = []
+                back = current
+                while back in came_from:  # keep going until we reach the start
+                    parent, action_used = came_from[back]
+                    path.append((back, action_used))
+                    back = parent
+                path.reverse()
+                
+                # The *first* step away from 'start' is path[0]
+                # But path[0] might be (goal_position, action_used_to_get_to_goal).
+                # Actually, we want the action from 'start' to the next tile.
+                # Because we appended in reverse, path[0] should be the first real move.
+                # If 'path' is empty for some reason (edge case?), fallback to random.
+                if not path:
+                    self._move_ghost_random(ghost, ghost_index)
+                    return
+                
+                # The 'action_used' in the first tuple is how we go from 'start' to path[0][0]
+                _, best_action = path[0]
+                if best_action is None:
+                    # fallback
+                    self._move_ghost_random(ghost, ghost_index)
+                    return
+                
+                # Move the ghost one step
+                new_pos = self.map[start[0], start[1], best_action]
+                ghost["dir"] = best_action
+                ghost["pos"] = new_pos
                 return
 
+            # Otherwise, explore neighbors
             for neighbor, neighbor_action in neighbors(current):
-                tentative_g = current_g + 1  # Each move costs 1
+                tentative_g = g_current + 1
                 if neighbor not in g_score or tentative_g < g_score[neighbor]:
                     g_score[neighbor] = tentative_g
-                    f_score = tentative_g + heuristic(neighbor, goal, fleeing)
-                    heappush(open_set, (f_score, tentative_g, neighbor, neighbor_action))
-                    came_from[neighbor] = neighbor_action
-                    action_map[neighbor] = current
-
-        # If no path is found, fall back to random movement
+                    f_score = tentative_g + heuristic(neighbor, goal)
+                    heapq.heappush(open_set, (f_score, tentative_g, neighbor, neighbor_action))
+                    
+                    # Store the *parent* (current) and the *action* (neighbor_action)
+                    came_from[neighbor] = (current, neighbor_action)
+        # If no path is found, fallback to random movement
         self._move_ghost_random(ghost, ghost_index)
+
+
+
+    def _move_ghost_flee(self, ghost, ghost_index):
+        """Flee logic: pick the neighbor that maximizes distance from Pillman."""
+        y_g, x_g = ghost["pos"]
+        y_p, x_p = self.world_state["pillman"]["pos"]
+
+        best_action = None
+        best_dist = -999999  # We'll maximize distance
+
+        # Check all possible moves
+        for action in range(1, self.nactions):
+            new_pos = self.map[y_g, x_g, action]
+            # skip if invalid or results in collision
+            if np.array_equal(new_pos, ghost["pos"]):
+                continue
+            if self._is_ghost_collision(new_pos, ghost_index):
+                continue
+            
+            # Manhattan distance from Pillman if we move there
+            dist = abs(new_pos[0] - y_p) + abs(new_pos[1] - x_p)
+            if dist > best_dist:
+                best_dist = dist
+                best_action = action
+
+        # If no best_action found, fallback to random
+        if best_action is None:
+            self._move_ghost_random(ghost, ghost_index)
+        else:
+            ghost["dir"] = best_action
+            ghost["pos"] = self.map[y_g, x_g, best_action]
 
     def _is_ghost_collision(self, pos, ghost_index):
         """Check if the given position collides with any other ghost."""
@@ -424,7 +495,7 @@ class PillEaterEnv(gym.Env):
         self.seed_value = seed
         np.random.seed(seed)
 
-    def generate_new_maze(self, size = 13, p = 0.15):
+    def generate_new_maze(self, size = 13, p = 0.3):
         grid = np.ones((size, size), dtype=int)
         
         start_x, start_y = random.randrange(0, size, 2), random.randrange(0, size, 2)
@@ -451,10 +522,11 @@ class PillEaterEnv(gym.Env):
         
         for x in range(1, size - 1):
             for y in range(1, size - 1):
+                count = 0
                 if grid[x, y] == 1 and random.random() < p:
-                    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        if grid[x + dx, y + dy] == 0:
-                            grid[x, y] = 0
-                            break
+                    if grid[x + 1, y] == 0 and grid[x - 1, y] == 0 and grid[x, y - 1] == 1 and grid[x, y + 1] == 1:
+                        grid[x, y] = 0
+                    elif grid[x + 1, y] == 1 and grid[x - 1, y] == 1 and grid[x, y - 1] == 0 and grid[x, y + 1] == 0:
+                        grid[x, y] = 0
                     
         return grid

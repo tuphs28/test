@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, default="250m", help="name of agent checkpoint on which to run experiments")
     parser.add_argument("--num_episodes", type=int, default=1000, help="number of episodes to average over")
     parser.add_argument("--env_name", type=str, default="valid-", help="level dataset to run experiments on")
-    parser.add_argument("--num_thinking_steps", type=int, default=5, help="number of thinking steps to perform prior to cating")
+    parser.add_argument("--num_thinking_steps", type=int, default=5, help="number of thinking steps to perform prior to acting")
     args = parser.parse_args()
     num_episodes = args.num_episodes
     results = {}
@@ -77,14 +77,14 @@ if __name__ == "__main__":
     box_probes = []
     for layer in range(args.num_layers):
         probe = ConvProbe(32,5, 1, 0)
-        probe.load_state_dict(torch.load(f"./convresults/models/tracked_box_next_push_onto_with/{args.model_name}_layer{layer}_kernel1_wd0.001_seed0.pt", map_location=env.device))
+        probe.load_state_dict(torch.load(f"./results/convprobe_results/models/tracked_box_next_push_onto_with/{args.model_name}_layer{layer}_kernel1_wd0.001_seed0.pt", map_location=env.device))
         box_probes.append(probe)
 
 
     agent_probes = []
     for layer in range(args.num_layers):
         probe = ConvProbe(32,5, 1, 0)
-        probe.load_state_dict(torch.load(f"./convresults/models/agent_onto_after/{args.model_name}_layer{layer}_kernel1_wd0.001_seed0.pt", map_location=env.device))
+        probe.load_state_dict(torch.load(f"./results/convprobe_results/models/agent_onto_after/{args.model_name}_layer{layer}_kernel1_wd0.001_seed0.pt", map_location=env.device))
         agent_probes.append(probe)
 
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
                     preds_a[(trans["steps_taken"]-1)*args.num_ticks + tick] += trans[f"plan_agent_layer{layer+1}_tick_{tick+1}"].view(-1).tolist()
         for i in range(len(labs_a)):
             prec, rec, f1, sup = precision_recall_fscore_support(labs_a[i], preds_a[i], average='macro', zero_division=1)
-            checkpoint_results[f"plan_agent_layer{layer+1}_tick_{i+1}"] = f1.item()
+            checkpoint_results[f"plan_agent_layer{layer+1}_tick_{i+1}"] = f1
 
         labs_b, preds_b = [[] for i in range((args.num_thinking_steps+1)*args.num_ticks)], [[] for i in range((args.num_thinking_steps+1)*args.num_ticks)]
         for trans in probing_data:
@@ -163,7 +163,7 @@ if __name__ == "__main__":
                     preds_b[(trans["steps_taken"]-1)*args.num_ticks + tick] += trans[f"plan_box_layer{layer+1}_tick_{tick+1}"].view(-1).tolist()
         for i in range(len(labs_b)):
             prec, rec, f1, sup = precision_recall_fscore_support(labs_b[i], preds_b[i], average='macro', zero_division=1)
-            checkpoint_results[f"plan_box_layer{layer+1}_tick_{i+1}"] = f1.item()
+            checkpoint_results[f"plan_box_layer{layer+1}_tick_{i+1}"] = f1
 
     results[args.model_name] = checkpoint_results
     if not os.path.exists("./results"):
