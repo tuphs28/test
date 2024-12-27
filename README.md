@@ -22,9 +22,15 @@ sudo apt-get install zip python-opencv build-essential -y
 pip install Cython
 ```
 
-2. Compile and install Sokoban:
+2. Install Sokoban:
 ```bash
 cd sokoban
+pip install -e .
+```
+
+2. (Optional) Install Mini Pacman:
+```bash
+cd pilleater
 pip install -e .
 ```
 
@@ -124,6 +130,26 @@ By default, all of the above commands run the Sokoban experiments for the fully-
 - **Early DRC(3,3) Agent Checkpoints**: To run experiments for earlier checkpoints of the DRC(3,3) agent, replace `--model_name "250m"` with `--model_name "NUM_TRANSITIONSm"` where NUM_TRANSITIONS is either an integer between 1 and 50, or 100, 150, or 200.
 - **DRC(1,9) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m"`, `--num_layers 3` with `--num_layers 1`, and `--num_ticks 3` with `--num_ticks 9`.
 - **DRC(9,1) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m"`, `--num_layers 3` with `--num_layers 9`, and `--num_ticks 3` with `--num_ticks 1`.
+
+## Mini Pacman Experiments
+
+Performing experiments on Mini Pacman is very similar to as in Sokoban. To perform these experiments, move to the `experiments/pilleater_experiments` repo
+```bash
+cd experiments/sokoban_experiments
+```
+
+Then, to train spatially-local probes, perform a similar series of steps as to for Sokoban:
+
+1. Generate a probing training and a test dataset using the following commands
+```bash
+python3 create_probe_dataset.py --model_name "250m" --num_layers 3 --num_ticks 3 --num_episodes 50 --name "train" --seed 0
+python3 create_probe_dataset.py --model_name "250m" --num_layers 3 --num_ticks 3 --num_episodes 30 --name "test" --seed 1
+```
+
+2. Train a $K \times K$ (e.g. $1 \times 1$ or $3 \times 3$) probe to predict feature $FEATURE$ (e.g. `agent_onto_after_16` for concept AgentApproachDirection16 or `agent_onto_16` for concept gentApproach16 )
+ ```bash
+python3 train_conv_probe.py --model "250m" --num_layers 3 --feature FEATURE --kernel K --num_epochs 10
+```
 
 ## Training New Agents
 
