@@ -121,6 +121,8 @@ python3 run_cutoff_interv_exps.py --model_name "250m" --num_layers 3 --num_ticks
 python3 run_cutoff_interv_exps.py --model_name "250m" --num_layers 3 --num_ticks 3 --num_episodes 200 --noboxinterv # perform only agent intervention
 ```
 
+The notebook `visualise_plans.ipynb` also contains the code necessary to visualise the agent's internal plans when the agent is intervened upon.
+
 ### Investigating the Emergence of Behavioural Evidence of Planning During Training
 
 To determine the extent to which the agent benefits from additional compute (in terms of the number of additonal levels solved) over the first 50 million transitions of training, run the following:
