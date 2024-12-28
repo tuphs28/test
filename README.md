@@ -165,3 +165,17 @@ python3 train.py --xpid new_exp_id --drc true --name "Sokoban-v0" --actor_unroll
 ```
 
 To train this agent instead in Mini Pacman, replace `--name "Sokoban-v0"` with `--name "gym_pilleater/PillEater-v0"`. To instead train a ResNet agent, replace `--drc true` with `--resnet true`.
+
+## Citation
+If using this paper or code, please cite us as follows:
+```
+@inproceedings{
+anonymous2024interpreting,
+title={Interpreting Emergent Planning in Model-Free Reinforcement Learning},
+author={Anonymous},
+booktitle={Submitted to The Thirteenth International Conference on Learning Representations},
+year={2024},
+url={https://openreview.net/forum?id=DzGe40glxs},
+note={under review}
+}
+```
