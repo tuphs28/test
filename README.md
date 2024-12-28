@@ -1,7 +1,9 @@
-# Interpreting Emergent Planning in Model-Free Reinforcement Learning
+# Interpreting Emergent Planning in Model-Free Reinforcement Learning (Repo-in-Progress)
 <img src="frontgif.gif" alt="front gif" style="width: 100%; display: block; margin: auto;"/>
 
 This is the official repo for the paper [*Interpreting Emergent Planning in Model-Free Reinforcement Learning*](https://openreview.net/forum?id=DzGe40glxs&referrer=%5BAuthor%20Console%5D). A blog post summarising this paper can be found [here](https://tuphs28.github.io/). This repo builds on the [*Thinker*](https://github.com/stephen-chung-mh/thinker) repo associated with the paper [*Thinker: Learning to Plan and Act*](https://arxiv.org/abs/2307.14993).
+
+NB - Repo still under construction
 
 ## Table of Contents
 - [Installation](#installation)
@@ -119,6 +121,8 @@ python3 run_cutoff_interv_exps.py --model_name "250m" --num_layers 3 --num_ticks
 python3 run_cutoff_interv_exps.py --model_name "250m" --num_layers 3 --num_ticks 3 --num_episodes 200 --noboxinterv # perform only agent intervention
 ```
 
+The notebook `visualise_plans.ipynb` also contains the code necessary to visualise the agent's internal plans when the agent is intervened upon.
+
 ### Investigating the Emergence of Behavioural Evidence of Planning During Training
 
 To determine the extent to which the agent benefits from additional compute (in terms of the number of additonal levels solved) over the first 50 million transitions of training, run the following:
@@ -129,12 +133,14 @@ python3 run_thinkingtime_exps.py --num_episodes 1000 --num_thinking_steps 5 --ra
 ### Performing Experiments For Different Agents
 By default, all of the above commands run the Sokoban experiments for the fully-trained DRC(3,3) agent after 250 million transitions. However, these experiments can also be run for other agents whose checkpoints are contained in `checkpoints`:
 - **Early DRC(3,3) Agent Checkpoints**: To run experiments for earlier checkpoints of the DRC(3,3) agent, replace `--model_name "250m"` with `--model_name "NUM_TRANSITIONSm"` where NUM_TRANSITIONS is either an integer between 1 and 50, or 100, 150, or 200.
-- **DRC(1,9) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m"`, `--num_layers 3` with `--num_layers 1`, and `--num_ticks 3` with `--num_ticks 9`.
-- **DRC(9,1) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m"`, `--num_layers 3` with `--num_layers 9`, and `--num_ticks 3` with `--num_ticks 1`.
+- **DRC(1,9) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m_d1t9"`, `--num_layers 3` with `--num_layers 1`, and `--num_ticks 3` with `--num_ticks 9`.
+- **DRC(9,1) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m_d1t9"`, `--num_layers 3` with `--num_layers 9`, and `--num_ticks 3` with `--num_ticks 1`.
+
+Additionally, the probes can be trained for ResNet agents. To train probes for the 24-block-deep ResNet agent included in this repo, run the probing experiments and replace `--model_name "250m"` with `--model_name "250m_resnet_d24"`, replace `--num_layers 3` with `--num_layers 24` and add the flag `--resnet`.
 
 ## Mini Pacman Experiments
 
-Performing experiments on Mini Pacman is very similar to as in Sokoban. To perform these experiments, move to the `experiments/pilleater_experiments` repo
+Performing experiments on Mini Pacman is very similar to as in Sokoban. To perform these experiments, move to the `experiments/pilleater_experiments` repo.
 ```bash
 cd experiments/sokoban_experiments
 ```
@@ -161,3 +167,17 @@ python3 train.py --xpid new_exp_id --drc true --name "Sokoban-v0" --actor_unroll
 ```
 
 To train this agent instead in Mini Pacman, replace `--name "Sokoban-v0"` with `--name "gym_pilleater/PillEater-v0"`. To instead train a ResNet agent, replace `--drc true` with `--resnet true`.
+
+## Citation
+If using this paper or code, please cite us as follows:
+```
+@inproceedings{
+anonymous2024interpreting,
+title={Interpreting Emergent Planning in Model-Free Reinforcement Learning},
+author={Anonymous},
+booktitle={Submitted to The Thirteenth International Conference on Learning Representations},
+year={2024},
+url={https://openreview.net/forum?id=DzGe40glxs},
+note={under review}
+}
+```
