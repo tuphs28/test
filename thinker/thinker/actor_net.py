@@ -1179,7 +1179,7 @@ class MCTS(ActorBaseNet):
     
 class ResNet(ActorBaseNet):
 
-    def __init__(self, obs_space, action_space, flags, tree_rep_meaning=None, record_state=False, in_dim=7, hidden_dim=64, num_layers=8):
+    def __init__(self, obs_space, action_space, flags, tree_rep_meaning=None, record_state=False, in_dim=7, hidden_dim=32, num_layers=8):
         super(ResNet, self).__init__(obs_space, action_space, flags, tree_rep_meaning, record_state)
 
         layers = []
@@ -1225,9 +1225,9 @@ class ResNet(ActorBaseNet):
         core_output = self.core(x)
         if self.record_state:
             self.hidden_state = []
-            for layer in self.core[6:]:
+            for layer in self.core:
                 self.hidden_state.append(layer.hidden_state)
-            self.hidden_state = torch.concat(self.hidden_state, dim=1)
+            self.hidden_state = torch.concat(self.hidden_state, dim=1).unsqueeze(1)
         core_output = torch.flatten(core_output, 1)
         final_out = F.relu(self.final_layer(core_output))
 

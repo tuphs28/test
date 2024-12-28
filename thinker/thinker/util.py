@@ -129,7 +129,7 @@ def process_flags(flags):
     return flags
 
 def process_flags_actor(flags):    
-    if flags.drc:
+    if flags.drc or flags.resnet:
         flags.wrapper_type = 1
 
     if flags.wrapper_type == 1:
