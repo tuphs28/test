@@ -136,9 +136,11 @@ By default, all of the above commands run the Sokoban experiments for the fully-
 - **DRC(1,9) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m_d1t9"`, `--num_layers 3` with `--num_layers 1`, and `--num_ticks 3` with `--num_ticks 9`.
 - **DRC(9,1) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m_d1t9"`, `--num_layers 3` with `--num_layers 9`, and `--num_ticks 3` with `--num_ticks 1`.
 
+Additionally, the probes can be trained for ResNet agents. To train probes for the 24-block-deep ResNet agent included in this repo, run the probing experiments and replace `--model_name "250m"` with `--model_name "250m_resnet_d24"`, replace `--num_layers 3` with `--num_layers 24` and add the flag `--resnet`.
+
 ## Mini Pacman Experiments
 
-Performing experiments on Mini Pacman is very similar to as in Sokoban. To perform these experiments, move to the `experiments/pilleater_experiments` repo
+Performing experiments on Mini Pacman is very similar to as in Sokoban. To perform these experiments, move to the `experiments/pilleater_experiments` repo.
 ```bash
 cd experiments/sokoban_experiments
 ```
