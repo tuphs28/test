@@ -153,7 +153,7 @@ python3 create_probe_dataset.py --model_name "250m" --num_layers 3 --num_ticks 3
 python3 create_probe_dataset.py --model_name "250m" --num_layers 3 --num_ticks 3 --num_episodes 30 --name "test" --seed 1
 ```
 
-2. Train a $K \times K$ (e.g. $1 \times 1$ or $3 \times 3$) probe to predict feature $FEATURE$ (e.g. `agent_onto_after_16` for concept AgentApproachDirection16 or `agent_onto_16` for concept gentApproach16 )
+2. Train a $K \times K$ (e.g. $1 \times 1$ or $3 \times 3$) probe to predict feature $FEATURE$ (e.g. `agent_onto_after_16` for concept AgentApproachDirection16 or `agent_onto_16` for concept AgentApproach16 )
  ```bash
 python3 train_conv_probe.py --model "250m" --num_layers 3 --feature FEATURE --kernel K --num_epochs 10
 ```
