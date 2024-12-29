@@ -132,7 +132,7 @@ python3 run_thinkingtime_exps.py --num_episodes 1000 --num_thinking_steps 5 --ra
 
 ### Performing Experiments For Different Agents
 By default, all of the above commands run the Sokoban experiments for the fully-trained DRC(3,3) agent after 250 million transitions. However, these experiments can also be run for other agents whose checkpoints are contained in `checkpoints`:
-- **Early DRC(3,3) Agent Checkpoints**: To run experiments for earlier checkpoints of the DRC(3,3) agent, replace `--model_name "250m"` with `--model_name "NUM_TRANSITIONSm"` where $NUM_TRANSITIONS$ is either an integer between 1 and 50, or 100, 150, or 200.
+- **Early DRC(3,3) Agent Checkpoints**: To run experiments for earlier checkpoints of the DRC(3,3) agent, replace `--model_name "250m"` with `--model_name "NUMTRANSITIONSm"` where $NUMTRANSITIONS$ is either an integer between 1 and 50, or 100, 150, or 200.
 - **DRC(1,9) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m_d1t9"`, `--num_layers 3` with `--num_layers 1`, and `--num_ticks 3` with `--num_ticks 9`.
 - **DRC(9,1) Agent**: To run experiments for the DRC(1,9) agent, replace `--model_name "250m"` with `--model_name "100m_d1t9"`, `--num_layers 3` with `--num_layers 9`, and `--num_ticks 3` with `--num_ticks 1`.
 
