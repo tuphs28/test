@@ -21,7 +21,7 @@ Please note that we are still performing additional experiments regarding ResNet
 
 ```bash
 sudo apt-get update
-sudo apt-get install zip python-opencv build-essential -y
+sudo apt-get install zip python3-opencv build-essential -y
 pip install Cython
 ```
 
